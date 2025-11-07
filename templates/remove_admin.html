@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Remove Admin - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/remove_admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-user-times"></i>
+        </div>
+        <div class="header-text">
+            <h1>Remove Admin User</h1>
+            <p>Delete administrator accounts from the system</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ admins|length }}</div>
+            <div class="stat-label">Total Admins</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-crown"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="superadminCount">0</div>
+            <div class="stat-label">SuperAdmins</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-users-cog"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="adminCount">0</div>
+            <div class="stat-label">Regular Admins</div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin List Card -->
+<div class="card admins-card">
+    <div class="card-header">
+        <div class="header-left">
+            <i class="fas fa-list"></i>
+            Administrator List
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by username..." 
+                    class="search-input">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if admins %}
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-filter"></i>
+                    Filter by Role:
+                </label>
+                <select id="roleFilter" class="filter-select">
+                    <option value="">All Roles</option>
+                    <option value="superadmin">SuperAdmin</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                <i class="fas fa-redo"></i>
+                Reset
+            </button>
+        </div>
+
+        <!-- Admin Table -->
+        <div class="table-responsive">
+            <table class="table admin-table" id="adminTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Username</th>
+                        <th><i class="fas fa-user-tag"></i> Role</th>
+                        <th class="text-center"><i class="fas fa-cog"></i> Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody">
+                    {% for admin in admins %}
+                    <tr class="admin-row" data-username="{{ admin[0] }}" data-role="{{ admin[1] }}">
+                        <td class="username">
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    {% if admin[1] == 'superadmin' %}
+                                    <i class="fas fa-crown"></i>
+                                    {% else %}
+                                    <i class="fas fa-user"></i>
+                                    {% endif %}
+                                </div>
+                                <span>{{ admin[0] }}</span>
+                            </div>
+                        </td>
+                        <td class="role">
+                            {% if admin[1] == 'superadmin' %}
+                            <span class="badge badge-superadmin">
+                                <i class="fas fa-crown"></i>
+                                SuperAdmin
+                            </span>
+                            {% else %}
+                            <span class="badge badge-admin">
+                                <i class="fas fa-user"></i>
+                                Admin
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <button 
+                                type="button" 
+                                class="btn btn-danger btn-sm delete-btn"
+                                onclick="confirmDelete('{{ admin[0] }}', '{{ admin[1] }}')">
+                                <i class="fas fa-trash"></i>
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="no-results" style="display: none;">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h4>No Results Found</h4>
+            <p>Try adjusting your search or filter criteria</p>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-users-slash"></i>
+            </div>
+            <h3>No Other Admins</h3>
+            <p>There are no other administrator accounts in the system.</p>
+            <a href="{{ url_for('add_admin') }}" class="btn btn-warning">
+                <i class="fas fa-user-plus"></i>
+                Add New Admin
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-text">
+                    Are you sure you want to remove <strong id="adminUsername"></strong> 
+                    (<span id="adminRole"></span>)?
+                </p>
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>This action cannot be undone. The user will lose all access to the system immediately.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <form method="POST" action="{{ url_for('remove_admin') }}" id="deleteForm">
+                    <input type="hidden" name="username" id="deleteUsername">
+                    <input type="hidden" name="role" id="deleteRole">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i>
+                        Yes, Remove Admin
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Count roles on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateRoleCounts();
+        filterAdmins();
+    });
+
+    function updateRoleCounts() {
+        const rows = document.querySelectorAll('.admin-row');
+        let superadminCount = 0;
+        let adminCount = 0;
+
+        rows.forEach(row => {
+            const role = row.dataset.role;
+            if (role === 'superadmin') {
+                superadminCount++;
+            } else {
+                adminCount++;
+            }
+        });
+
+        document.getElementById('superadminCount').textContent = superadminCount;
+        document.getElementById('adminCount').textContent = adminCount;
+    }
+
+    // Search and filter
+    document.getElementById('searchInput').addEventListener('input', filterAdmins);
+    document.getElementById('roleFilter').addEventListener('change', filterAdmins);
+
+    function filterAdmins() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+        
+        const rows = document.querySelectorAll('.admin-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const username = row.dataset.username.toLowerCase();
+            const role = row.dataset.role;
+
+            const matchesSearch = username.includes(searchTerm);
+            const matchesRole = !roleFilter || role === roleFilter;
+
+            if (matchesSearch && matchesRole) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Show/hide no results message
+        const noResults = document.getElementById('noResults');
+        const table = document.querySelector('.table-responsive');
+        
+        if (visibleCount === 0 && (searchTerm || roleFilter)) {
+            table.style.display = 'none';
+            noResults.style.display = 'flex';
+        } else {
+            table.style.display = 'block';
+            noResults.style.display = 'none';
+        }
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('roleFilter').value = '';
+        filterAdmins();
+    }
+
+    // Delete confirmation
+    function confirmDelete(username, role) {
+        document.getElementById('adminUsername').textContent = username;
+        document.getElementById('adminRole').textContent = role === 'superadmin' ? 'SuperAdmin' : 'Admin';
+        document.getElementById('deleteUsername').value = username;
+        document.getElementById('deleteRole').value = role;
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+
+    // Prevent accidental navigation
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Removing...';
+        });
+    }
+</script>
+{% endblock %}

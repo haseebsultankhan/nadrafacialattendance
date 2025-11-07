@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block title %}Remove Employee - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/remove_employee.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-user-minus"></i>
+        </div>
+        <div class="header-text">
+            <h1>Remove Employee</h1>
+            <p>Delete employee records from the system</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ employees|length }}</div>
+            <div class="stat-label">Total Employees</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="filteredCount">{{ employees|length }}</div>
+            <div class="stat-label">Filtered Results</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-check-square"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="selectedCount">0</div>
+            <div class="stat-label">Selected</div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee List Card -->
+<div class="card employees-card">
+    <div class="card-header">
+        <div class="header-left">
+            <i class="fas fa-list"></i>
+            Employee List
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by name, number, or department..." 
+                    class="search-input">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if employees %}
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-filter"></i>
+                    Filter by Department:
+                </label>
+                <select id="departmentFilter" class="filter-select">
+                    <option value="">All Departments</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-sort"></i>
+                    Sort by:
+                </label>
+                <select id="sortSelect" class="filter-select">
+                    <option value="emp_num_asc">Employee Number (Ascending)</option>
+                    <option value="emp_num_desc">Employee Number (Descending)</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="dept_asc">Department (A-Z)</option>
+                </select>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                <i class="fas fa-redo"></i>
+                Reset Filters
+            </button>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions" style="display: none;">
+            <div class="bulk-info">
+                <i class="fas fa-info-circle"></i>
+                <span id="bulkText">0 employees selected</span>
+            </div>
+            <div class="bulk-buttons">
+                <button class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                    <i class="fas fa-trash"></i>
+                    Delete Selected
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="clearSelection()">
+                    <i class="fas fa-times"></i>
+                    Clear Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Employee Table -->
+        <div class="table-responsive">
+            <table class="table employee-table" id="employeeTable">
+                <thead>
+                    <tr>
+                        <th class="checkbox-col">
+                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                        </th>
+                        <th><i class="fas fa-id-badge"></i> Employee #</th>
+                        <th><i class="fas fa-user"></i> First Name</th>
+                        <th><i class="fas fa-user"></i> Last Name</th>
+                        <th><i class="fas fa-building"></i> Department</th>
+                        <th class="text-center"><i class="fas fa-cog"></i> Action</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeTableBody">
+                    {% for emp in employees %}
+                    <tr class="employee-row" data-emp-num="{{ emp[0] }}" data-dept="{{ emp[3] }}">
+                        <td class="checkbox-col">
+                            <input type="checkbox" class="employee-checkbox" value="{{ emp[0] }}" onclick="updateBulkActions()">
+                        </td>
+                        <td class="emp-num">
+                            <span class="badge badge-primary">{{ emp[0] }}</span>
+                        </td>
+                        <td class="first-name">{{ emp[1] }}</td>
+                        <td class="last-name">{{ emp[2] }}</td>
+                        <td class="department">
+                            <span class="badge badge-info">{{ emp[3] }}</span>
+                        </td>
+                        <td class="text-center">
+                            <button 
+                                type="button" 
+                                class="btn btn-danger btn-sm delete-btn"
+                                onclick="confirmDelete('{{ emp[0] }}', '{{ emp[1] }} {{ emp[2] }}')">
+                                <i class="fas fa-trash"></i>
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" id="paginationWrapper">
+            <div class="pagination-info">
+                Showing <span id="showingStart">1</span> to <span id="showingEnd">{{ employees|length }}</span> of <span id="totalRecords">{{ employees|length }}</span> employees
+            </div>
+            <div class="pagination-controls">
+                <button class="btn btn-sm btn-outline-primary" id="prevBtn" onclick="changePage(-1)" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                    Previous
+                </button>
+                <div class="page-numbers" id="pageNumbers"></div>
+                <button class="btn btn-sm btn-outline-primary" id="nextBtn" onclick="changePage(1)" disabled>
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- No Employees Found -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-users-slash"></i>
+            </div>
+            <h3>No Employees Found</h3>
+            <p>There are currently no employees registered in the system.</p>
+            <a href="{{ url_for('add_employee') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i>
+                Add First Employee
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-text">
+                    Are you sure you want to remove employee <strong id="empName"></strong> (Employee #<strong id="empNum"></strong>)?
+                </p>
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>This action cannot be undone. All associated data will be permanently deleted.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <form method="POST" action="{{ url_for('remove_employee') }}" id="deleteForm">
+                    <input type="hidden" name="emp_num" id="deleteEmpNum">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i>
+                        Yes, Remove Employee
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let filteredRows = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        populateDepartmentFilter();
+        filterAndSort();
+    });
+
+    // Populate department filter
+    function populateDepartmentFilter() {
+        const departments = new Set();
+        document.querySelectorAll('.employee-row').forEach(row => {
+            departments.add(row.dataset.dept);
+        });
+        
+        const select = document.getElementById('departmentFilter');
+        departments.forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            select.appendChild(option);
+        });
+    }
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', filterAndSort);
+    document.getElementById('departmentFilter').addEventListener('change', filterAndSort);
+    document.getElementById('sortSelect').addEventListener('change', filterAndSort);
+
+    function filterAndSort() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const deptFilter = document.getElementById('departmentFilter').value;
+        const sortBy = document.getElementById('sortSelect').value;
+        
+        const rows = Array.from(document.querySelectorAll('.employee-row'));
+        
+        // Filter
+        filteredRows = rows.filter(row => {
+            const empNum = row.querySelector('.emp-num').textContent.toLowerCase();
+            const firstName = row.querySelector('.first-name').textContent.toLowerCase();
+            const lastName = row.querySelector('.last-name').textContent.toLowerCase();
+            const dept = row.dataset.dept;
+            
+            const matchesSearch = empNum.includes(searchTerm) || 
+                                firstName.includes(searchTerm) || 
+                                lastName.includes(searchTerm) ||
+                                dept.toLowerCase().includes(searchTerm);
+            const matchesDept = !deptFilter || dept === deptFilter;
+            
+            return matchesSearch && matchesDept;
+        });
+        
+        // Sort
+        filteredRows.sort((a, b) => {
+            const aNum = parseInt(a.dataset.empNum);
+            const bNum = parseInt(b.dataset.empNum);
+            const aFirst = a.querySelector('.first-name').textContent;
+            const bFirst = b.querySelector('.first-name').textContent;
+            const aLast = a.querySelector('.last-name').textContent;
+            const bLast = b.querySelector('.last-name').textContent;
+            const aDept = a.dataset.dept;
+            const bDept = b.dataset.dept;
+            
+            switch(sortBy) {
+                case 'emp_num_asc': return aNum - bNum;
+                case 'emp_num_desc': return bNum - aNum;
+                case 'name_asc': return (aFirst + aLast).localeCompare(bFirst + bLast);
+                case 'name_desc': return (bFirst + bLast).localeCompare(aFirst + aLast);
+                case 'dept_asc': return aDept.localeCompare(bDept);
+                default: return 0;
+            }
+        });
+        
+        // Update filtered count
+        document.getElementById('filteredCount').textContent = filteredRows.length;
+        
+        // Reset to first page
+        currentPage = 1;
+        displayPage();
+    }
+
+    function displayPage() {
+        const tbody = document.getElementById('employeeTableBody');
+        tbody.innerHTML = '';
+        
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const pageRows = filteredRows.slice(start, end);
+        
+        pageRows.forEach(row => {
+            tbody.appendChild(row.cloneNode(true));
+        });
+        
+        // Update pagination
+        updatePagination();
+        
+        // Show/hide rows
+        document.querySelectorAll('.employee-row').forEach(row => {
+            row.style.display = 'none';
+        });
+    }
+
+    function updatePagination() {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, filteredRows.length);
+        
+        document.getElementById('showingStart').textContent = filteredRows.length > 0 ? start : 0;
+        document.getElementById('showingEnd').textContent = end;
+        document.getElementById('totalRecords').textContent = filteredRows.length;
+        
+        // Update buttons
+        document.getElementById('prevBtn').disabled = currentPage === 1;
+        document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+        
+        // Page numbers
+        const pageNumbers = document.getElementById('pageNumbers');
+        pageNumbers.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+            btn.textContent = i;
+            btn.onclick = () => goToPage(i);
+            pageNumbers.appendChild(btn);
+        }
+    }
+
+    function changePage(delta) {
+        currentPage += delta;
+        displayPage();
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        displayPage();
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('departmentFilter').value = '';
+        document.getElementById('sortSelect').value = 'emp_num_asc';
+        filterAndSort();
+    }
+
+    // Select All
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        document.querySelectorAll('.employee-checkbox').forEach(cb => {
+            cb.checked = selectAll.checked;
+        });
+        updateBulkActions();
+    }
+
+    // Bulk Actions
+    function updateBulkActions() {
+        const checkboxes = document.querySelectorAll('.employee-checkbox:checked');
+        const count = checkboxes.length;
+        
+        document.getElementById('selectedCount').textContent = count;
+        document.getElementById('bulkActions').style.display = count > 0 ? 'flex' : 'none';
+        document.getElementById('bulkText').textContent = `${count} employee${count !== 1 ? 's' : ''} selected`;
+    }
+
+    function clearSelection() {
+        document.querySelectorAll('.employee-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+        updateBulkActions();
+    }
+
+    function bulkDelete() {
+        const checkboxes = document.querySelectorAll('.employee-checkbox:checked');
+        const count = checkboxes.length;
+        
+        if (confirm(`Are you sure you want to delete ${count} employee${count !== 1 ? 's' : ''}? This action cannot be undone.`)) {
+            checkboxes.forEach(cb => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("remove_employee") }}';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'emp_num';
+                input.value = cb.value;
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+    }
+
+    // Delete confirmation modal
+    function confirmDelete(empNum, empName) {
+        document.getElementById('empNum').textContent = empNum;
+        document.getElementById('empName').textContent = empName;
+        document.getElementById('deleteEmpNum').value = empNum;
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

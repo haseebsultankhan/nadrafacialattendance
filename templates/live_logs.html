@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Live Logs - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/live_logs.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-list-alt"></i>
+        </div>
+        <div class="header-text">
+            <h1>Live Detection Logs</h1>
+            <p>Real-time attendance and face recognition records</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" onclick="location.reload()">
+            <i class="fas fa-sync"></i>
+            <span>Refresh</span>
+        </button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-database"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="totalLogs">{{ logs|length }}</div>
+            <div class="stat-label">Total Records</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-filter"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="filteredCount">{{ logs|length }}</div>
+            <div class="stat-label">Filtered Results</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="todayCount">0</div>
+            <div class="stat-label">Today's Logs</div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Card -->
+<div class="card logs-card">
+    <div class="card-header">
+        <div class="header-left">
+            <i class="fas fa-history"></i>
+            Detection History (Page {{ page }} of {{ total_pages }})
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by employee name or number..." 
+                    class="search-input">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if logs %}
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-video"></i>
+                    Camera:
+                </label>
+                <select id="cameraFilter" class="filter-select">
+                    <option value="">All Cameras</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-calendar"></i>
+                    Date:
+                </label>
+                <input type="date" id="dateFilter" class="filter-select">
+            </div>
+            
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-sort"></i>
+                    Sort:
+                </label>
+                <select id="sortFilter" class="filter-select">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="similarity_high">Similarity (High-Low)</option>
+                    <option value="similarity_low">Similarity (Low-High)</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters()">
+                <i class="fas fa-redo"></i>
+                Reset All
+            </button>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="table-responsive">
+            <table class="table logs-table" id="logsTable">
+                <thead>
+                    <tr>
+                        <th class="photo-col"><i class="fas fa-image"></i> Photo</th>
+                        <th><i class="fas fa-id-badge"></i> Employee #</th>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-video"></i> Camera</th>
+                        <th><i class="fas fa-clock"></i> Timestamp</th>
+                        <th class="text-center"><i class="fas fa-percentage"></i> Similarity</th>
+                        <th class="text-center"><i class="fas fa-chart-line"></i> YOLO Conf</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    {% for log in logs %}
+                    <tr class="log-row" 
+                        data-emp-num="{{ log[1] }}" 
+                        data-name="{{ log[2] }}" 
+                        data-camera="{{ log[3] }}"
+                        data-timestamp="{{ log[4] }}"
+                        data-similarity="{{ log[6] }}"
+                        data-date="{{ log[4][:10] }}">
+                        <td class="photo-col">
+                            <div class="detection-photo" data-image-url="{{ url_for('detection_image', detection_id=log[0]) }}" onclick="viewPhoto(this.dataset.imageUrl)"></div>
+                                <img src="{{ url_for('detection_image', detection_id=log[0]) }}" 
+                                     alt="Detection"
+                                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2214%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+                                <div class="photo-overlay">
+                                    <i class="fas fa-search-plus"></i>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="emp-num">
+                            <span class="badge badge-primary">{{ log[1] }}</span>
+                        </td>
+                        <td class="emp-name">{{ log[2] }}</td>
+                        <td class="camera">
+                            <span class="camera-badge">
+                                <i class="fas fa-video"></i>
+                                {{ log[3] }}
+                            </span>
+                        </td>
+                        <td class="timestamp">{{ log[4] }}</td>
+                        <td class="text-center">
+                            <span class="score-badge score-similarity">
+                                {{ "%.2f"|format(log[6]) }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="score-badge score-yolo">
+                                {{ "%.2f"|format(log[7]) }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="no-results" style="display: none;">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h4>No Results Found</h4>
+            <p>Try adjusting your search or filter criteria</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper">
+            <div class="pagination-info">
+                Showing <span id="showingStart">{{ ((page - 1) * 50) + 1 }}</span> 
+                to <span id="showingEnd">{{ page * 50 if page * 50 < logs|length else logs|length }}</span> 
+                of <span id="totalRecords">{{ logs|length }}</span> logs
+            </div>
+            <nav class="pagination-nav">
+                <ul class="pagination">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('live_logs', page=page-1) }}">
+                            <i class="fas fa-chevron-left"></i>
+                            Previous
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-chevron-left"></i>
+                            Previous
+                        </span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ p }}</span>
+                        </li>
+                        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 2 and p <= page + 2) %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('live_logs', page=p) }}">{{ p }}</a>
+                        </li>
+                        {% elif p == page - 3 or p == page + 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('live_logs', page=page+1) }}">
+                            Next
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Next
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <h3>No Detection Logs</h3>
+            <p>There are no detection records in the system yet.</p>
+            <a href="{{ url_for('live_view') }}" class="btn btn-primary">
+                <i class="fas fa-video"></i>
+                View Live Cameras
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Photo Viewer Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-image"></i>
+                    Detection Photo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Detection Photo" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+        populateCameraFilter();
+        countTodayLogs();
+        applyFilters();
+    });
+
+    // Populate camera filter
+    function populateCameraFilter() {
+        const cameras = new Set();
+        document.querySelectorAll('.log-row').forEach(row => {
+            cameras.add(row.dataset.camera);
+        });
+        
+        const select = document.getElementById('cameraFilter');
+        cameras.forEach(camera => {
+            const option = document.createElement('option');
+            option.value = camera;
+            option.textContent = camera;
+            select.appendChild(option);
+        });
+    }
+
+    // Count today's logs
+    function countTodayLogs() {
+        const today = new Date().toISOString().split('T')[0];
+        const todayLogs = document.querySelectorAll(`.log-row[data-date="${today}"]`).length;
+        document.getElementById('todayCount').textContent = todayLogs;
+    }
+
+    // Search and filter
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('cameraFilter').addEventListener('change', applyFilters);
+    document.getElementById('dateFilter').addEventListener('change', applyFilters);
+    document.getElementById('sortFilter').addEventListener('change', applyFilters);
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const cameraFilter = document.getElementById('cameraFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
+        const sortFilter = document.getElementById('sortFilter').value;
+        
+        let rows = Array.from(document.querySelectorAll('.log-row'));
+        let visibleCount = 0;
+
+        // Filter
+        rows.forEach(row => {
+            const empNum = row.dataset.empNum.toLowerCase();
+            const name = row.dataset.name.toLowerCase();
+            const camera = row.dataset.camera;
+            const date = row.dataset.date;
+
+            const matchesSearch = empNum.includes(searchTerm) || name.includes(searchTerm);
+            const matchesCamera = !cameraFilter || camera === cameraFilter;
+            const matchesDate = !dateFilter || date === dateFilter;
+
+            if (matchesSearch && matchesCamera && matchesDate) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Sort visible rows
+        const tbody = document.getElementById('logsTableBody');
+        const visibleRows = rows.filter(row => row.style.display !== 'none');
+        
+        visibleRows.sort((a, b) => {
+            switch(sortFilter) {
+                case 'newest':
+                    return new Date(b.dataset.timestamp) - new Date(a.dataset.timestamp);
+                case 'oldest':
+                    return new Date(a.dataset.timestamp) - new Date(b.dataset.timestamp);
+                case 'name_asc':
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                case 'name_desc':
+                    return b.dataset.name.localeCompare(a.dataset.name);
+                case 'similarity_high':
+                    return parseFloat(b.dataset.similarity) - parseFloat(a.dataset.similarity);
+                case 'similarity_low':
+                    return parseFloat(a.dataset.similarity) - parseFloat(b.dataset.similarity);
+                default:
+                    return 0;
+            }
+        });
+
+        // Clear and re-append
+        tbody.innerHTML = '';
+        visibleRows.forEach(row => tbody.appendChild(row));
+        rows.filter(row => row.style.display === 'none').forEach(row => tbody.appendChild(row));
+
+        // Update counts
+        document.getElementById('filteredCount').textContent = visibleCount;
+
+        // Show/hide no results
+        const noResults = document.getElementById('noResults');
+        const table = document.querySelector('.table-responsive');
+        
+        if (visibleCount === 0 && (searchTerm || cameraFilter || dateFilter)) {
+            table.style.display = 'none';
+            noResults.style.display = 'flex';
+            document.querySelector('.pagination-wrapper').style.display = 'none';
+        } else {
+            table.style.display = 'block';
+            noResults.style.display = 'none';
+            document.querySelector('.pagination-wrapper').style.display = 'flex';
+        }
+    }
+
+    function clearAllFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('cameraFilter').value = '';
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('sortFilter').value = 'newest';
+        applyFilters();
+    }
+
+    // Photo viewer
+    function viewPhoto(src) {
+        document.getElementById('modalImage').src = src;
+        const modal = new bootstrap.Modal(document.getElementById('photoModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

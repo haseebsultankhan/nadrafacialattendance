@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Add Admin - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/add_admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="header-text">
+            <h1>Add Admin User</h1>
+            <p>Create new administrator account with custom permissions</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Add Admin Form -->
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card form-card">
+            <div class="card-header">
+                <i class="fas fa-user-plus"></i>
+                Admin Registration Form
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_admin') }}" id="adminForm">
+                    
+                    <!-- Account Information -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Account Information</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user"></i>
+                                Username
+                                <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="username" 
+                                name="username" 
+                                placeholder="Enter username" 
+                                required
+                                pattern="[a-zA-Z0-9._-]+"
+                                title="Only letters, numbers, dots, hyphens, and underscores allowed">
+                            <small class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                Must be unique. Use letters, numbers, dots, hyphens, or underscores.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i>
+                                Password
+                                <span class="required">*</span>
+                            </label>
+                            <div class="password-wrapper">
+                                <input 
+                                    type="password" 
+                                    class="form-control" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="Enter strong password" 
+                                    required
+                                    minlength="6">
+                                <button type="button" class="toggle-password" onclick="togglePassword()">
+                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            <small class="form-text">
+                                <i class="fas fa-shield-alt"></i>
+                                Minimum 6 characters. Use a strong, secure password.
+                            </small>
+                            
+                            <!-- Password Strength Indicator -->
+                            <div class="password-strength" id="passwordStrength" style="display: none;">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
+                                <span class="strength-text" id="strengthText"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Selection -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-tag"></i>
+                            <span>Role & Permissions</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="role" class="form-label">
+                                <i class="fas fa-crown"></i>
+                                User Role
+                                <span class="required">*</span>
+                            </label>
+                            <select class="form-select" id="role" name="role" required onchange="togglePermissions()">
+                                <option value="admin">Admin</option>
+                                <option value="superadmin">SuperAdmin</option>
+                            </select>
+                        </div>
+
+                        <!-- Role Descriptions -->
+                        <div class="role-descriptions">
+                            <div class="role-card role-admin" id="roleAdminDesc">
+                                <div class="role-header">
+                                    <i class="fas fa-user"></i>
+                                    <strong>Admin</strong>
+                                </div>
+                                <p>Custom permissions selected below. Limited access based on assigned permissions.</p>
+                            </div>
+                            <div class="role-card role-superadmin" id="roleSuperadminDesc" style="display: none;">
+                                <div class="role-header">
+                                    <i class="fas fa-crown"></i>
+                                    <strong>SuperAdmin</strong>
+                                </div>
+                                <p>Full system access. Can manage all employees, admins, view live feeds, and access all system features.</p>
+                            </div>
+                        </div>
+
+                        <!-- Permissions Section (Only for Admin) -->
+                        <div id="permissionsSection" class="permissions-section">
+                            <div class="permissions-header">
+                                <i class="fas fa-key"></i>
+                                <strong>Select Permissions</strong>
+                                <span class="permissions-hint">(Choose what this admin can do)</span>
+                            </div>
+                            
+                            <div class="permissions-grid">
+                                <div class="permission-card">
+                                    <div class="permission-checkbox">
+                                        <input 
+                                            type="checkbox" 
+                                            id="perm_add_employee" 
+                                            name="perm_add_employee" 
+                                            checked>
+                                        <label for="perm_add_employee">
+                                            <div class="permission-icon">
+                                                <i class="fas fa-user-plus"></i>
+                                            </div>
+                                            <div class="permission-text">
+                                                <strong>Add Employee</strong>
+                                                <span>Register new employees in the system</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="permission-card">
+                                    <div class="permission-checkbox">
+                                        <input 
+                                            type="checkbox" 
+                                            id="perm_remove_employee" 
+                                            name="perm_remove_employee" 
+                                            checked>
+                                        <label for="perm_remove_employee">
+                                            <div class="permission-icon">
+                                                <i class="fas fa-user-minus"></i>
+                                            </div>
+                                            <div class="permission-text">
+                                                <strong>Remove Employee</strong>
+                                                <span>Delete employee records from database</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="permission-card">
+                                    <div class="permission-checkbox">
+                                        <input 
+                                            type="checkbox" 
+                                            id="perm_live_view" 
+                                            name="perm_live_view">
+                                        <label for="perm_live_view">
+                                            <div class="permission-icon">
+                                                <i class="fas fa-video"></i>
+                                            </div>
+                                            <div class="permission-text">
+                                                <strong>Live View</strong>
+                                                <span>Access real-time camera feeds</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="permission-card">
+                                    <div class="permission-checkbox">
+                                        <input 
+                                            type="checkbox" 
+                                            id="perm_live_logs" 
+                                            name="perm_live_logs" 
+                                            checked>
+                                        <label for="perm_live_logs">
+                                            <div class="permission-icon">
+                                                <i class="fas fa-list-alt"></i>
+                                            </div>
+                                            <div class="permission-text">
+                                                <strong>Live Logs</strong>
+                                                <span>View attendance and detection logs</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-box">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    <strong>Note:</strong> Admins can always reset their own password. SuperAdmins have all permissions by default and can reset any user's password.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-warning btn-lg" id="submitBtn">
+                            <i class="fas fa-save"></i>
+                            <span>Create Admin Account</span>
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i>
+                            <span>Cancel</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="card security-card">
+            <div class="card-body">
+                <div class="security-content">
+                    <div class="security-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="security-text">
+                        <strong>Security Best Practices</strong>
+                        <ul>
+                            <li>Use strong, unique passwords for each admin account</li>
+                            <li>Only grant necessary permissions based on job role</li>
+                            <li>Review and update admin permissions regularly</li>
+                            <li>Inform admins to keep their credentials secure</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle password visibility
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggleIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+
+    // Toggle permissions based on role
+    function togglePermissions() {
+        const role = document.getElementById('role').value;
+        const permissionsSection = document.getElementById('permissionsSection');
+        const roleAdminDesc = document.getElementById('roleAdminDesc');
+        const roleSuperadminDesc = document.getElementById('roleSuperadminDesc');
+        
+        if (role === 'superadmin') {
+            permissionsSection.style.display = 'none';
+            roleAdminDesc.style.display = 'none';
+            roleSuperadminDesc.style.display = 'block';
+        } else {
+            permissionsSection.style.display = 'block';
+            roleAdminDesc.style.display = 'block';
+            roleSuperadminDesc.style.display = 'none';
+        }
+    }
+
+    // Password strength checker
+    const passwordInput = document.getElementById('password');
+    const strengthIndicator = document.getElementById('passwordStrength');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        
+        if (password.length === 0) {
+            strengthIndicator.style.display = 'none';
+            return;
+        }
+        
+        strengthIndicator.style.display = 'block';
+        
+        let strength = 0;
+        
+        // Length check
+        if (password.length >= 6) strength += 20;
+        if (password.length >= 10) strength += 20;
+        
+        // Contains lowercase
+        if (/[a-z]/.test(password)) strength += 15;
+        
+        // Contains uppercase
+        if (/[A-Z]/.test(password)) strength += 15;
+        
+        // Contains numbers
+        if (/[0-9]/.test(password)) strength += 15;
+        
+        // Contains special characters
+        if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
+        
+        strengthFill.style.width = strength + '%';
+        
+        if (strength < 40) {
+            strengthFill.style.background = '#D32F2F';
+            strengthText.textContent = 'Weak';
+            strengthText.style.color = '#D32F2F';
+        } else if (strength < 70) {
+            strengthFill.style.background = '#FFA000';
+            strengthText.textContent = 'Medium';
+            strengthText.style.color = '#FFA000';
+        } else {
+            strengthFill.style.background = '#00C853';
+            strengthText.textContent = 'Strong';
+            strengthText.style.color = '#00C853';
+        }
+    });
+
+    // Form submission
+    const form = document.getElementById('adminForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Creating Account...</span>';
+    });
+
+    // Auto-lowercase username
+    document.getElementById('username').addEventListener('input', function() {
+        this.value = this.value.toLowerCase();
+    });
+
+    // Initialize on load
+    togglePermissions();
+</script>
+{% endblock %}

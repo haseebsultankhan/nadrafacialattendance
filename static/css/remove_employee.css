@@ -1,0 +1,662 @@
+/* ============================================
+   NADRA AI Attendance System - Remove Employee
+   ============================================ */
+
+/* CSS Variables */
+:root {
+    --nadra-primary: #004B87;
+    --nadra-secondary: #0066B3;
+    --nadra-accent: #00A3E0;
+    --nadra-success: #00C853;
+    --nadra-danger: #D32F2F;
+    --nadra-dark: #1a1a2e;
+    --nadra-light: #f5f7fa;
+    --nadra-white: #ffffff;
+    --nadra-border: #e1e8ed;
+    --nadra-text: #2c3e50;
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--nadra-white);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--nadra-danger), #E57373);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+.header-icon i {
+    font-size: 1.75rem;
+    color: var(--nadra-white);
+}
+
+.header-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--nadra-dark);
+    margin: 0 0 0.25rem 0;
+}
+
+.header-text p {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* ============================================
+   Statistics Bar
+   ============================================ */
+
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    background: var(--nadra-white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-item .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--nadra-primary), var(--nadra-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-item .stat-icon i {
+    font-size: 1.5rem;
+    color: var(--nadra-white);
+}
+
+.stat-content .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--nadra-dark);
+    line-height: 1;
+}
+
+.stat-content .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* ============================================
+   Employees Card
+   ============================================ */
+
+.employees-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.header-right {
+    flex: 1;
+    max-width: 400px;
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+    width: 100%;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 2px solid var(--nadra-border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--nadra-accent);
+    box-shadow: 0 0 0 4px rgba(0, 163, 224, 0.1);
+}
+
+/* ============================================
+   Filter Controls
+   ============================================ */
+
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--nadra-light);
+    border-radius: 10px;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--nadra-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.filter-select {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--nadra-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--nadra-white);
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--nadra-accent);
+}
+
+/* ============================================
+   Bulk Actions
+   ============================================ */
+
+.bulk-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.bulk-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--nadra-dark);
+}
+
+.bulk-info i {
+    font-size: 1.25rem;
+    color: #ff8f00;
+}
+
+.bulk-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ============================================
+   Employee Table
+   ============================================ */
+
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.employee-table {
+    margin: 0;
+}
+
+.employee-table thead {
+    background: var(--nadra-dark);
+    color: var(--nadra-white);
+}
+
+.employee-table thead th {
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.employee-table thead th i {
+    margin-right: 6px;
+}
+
+.employee-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--nadra-border);
+}
+
+.employee-table tbody tr {
+    transition: all 0.2s ease;
+    background: var(--nadra-white);
+}
+
+.employee-table tbody tr:hover {
+    background: var(--nadra-light);
+    transform: scale(1.01);
+}
+
+.checkbox-col {
+    width: 50px;
+    text-align: center;
+}
+
+.checkbox-col input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.badge-primary {
+    background: var(--nadra-primary);
+    color: var(--nadra-white);
+}
+
+.badge-info {
+    background: var(--nadra-accent);
+    color: var(--nadra-white);
+}
+
+.delete-btn {
+    transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--nadra-light);
+    border-radius: 10px;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pagination-info {
+    font-size: 0.9rem;
+    color: var(--nadra-text);
+    font-weight: 600;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--nadra-border);
+    background: var(--nadra-white);
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--nadra-text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+    border-color: var(--nadra-accent);
+    color: var(--nadra-accent);
+}
+
+.page-btn.active {
+    background: var(--nadra-primary);
+    border-color: var(--nadra-primary);
+    color: var(--nadra-white);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--nadra-light), #e0e7ed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-icon i {
+    font-size: 3rem;
+    color: #6c757d;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--nadra-dark);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+/* ============================================
+   Delete Modal
+   ============================================ */
+
+.modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--nadra-danger), #E57373);
+    color: var(--nadra-white);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.modal-title i {
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-text {
+    font-size: 1.05rem;
+    color: var(--nadra-text);
+    margin-bottom: 1.5rem;
+}
+
+.warning-box {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-left: 4px solid #ff8f00;
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--nadra-dark);
+    font-size: 0.9rem;
+}
+
+.warning-box i {
+    font-size: 1.25rem;
+    color: #ff8f00;
+    flex-shrink: 0;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 2px solid var(--nadra-border);
+}
+
+.modal-footer form {
+    margin: 0;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 992px) {
+    .header-right {
+        max-width: 100%;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-content {
+        width: 100%;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .stats-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .employees-card .card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-left,
+    .header-right {
+        width: 100%;
+    }
+
+    .bulk-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .bulk-buttons {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .bulk-buttons .btn {
+        width: 100%;
+    }
+
+    .pagination-wrapper {
+        flex-direction: column;
+    }
+
+    .pagination-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .page-numbers {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Make table scrollable on mobile */
+    .employee-table {
+        font-size: 0.85rem;
+    }
+
+    .employee-table thead th,
+    .employee-table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .header-icon i {
+        font-size: 1.5rem;
+    }
+
+    .header-text h1 {
+        font-size: 1.4rem;
+    }
+
+    .stat-item {
+        padding: 1rem;
+    }
+
+    .stat-item .stat-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .stat-item .stat-icon i {
+        font-size: 1.25rem;
+    }
+
+    .stat-content .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .employee-table {
+        font-size: 0.8rem;
+    }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.btn-outline-secondary {
+    background: var(--nadra-white);
+    border: 2px solid #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: var(--nadra-white);
+}
+
+.btn-outline-primary {
+    background: var(--nadra-white);
+    border: 2px solid var(--nadra-primary);
+    color: var(--nadra-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--nadra-primary);
+    color: var(--nadra-white);
+}
+
+.btn-outline-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="header-text">
+            <h1>System Notifications & Audit Log</h1>
+            <p>Track all administrative actions and system events</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" onclick="location.reload()">
+            <i class="fas fa-sync"></i>
+            <span>Refresh</span>
+        </button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Bar -->
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ notifications|length }}</div>
+            <div class="stat-label">Total Activities</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-filter"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="filteredCount">{{ notifications|length }}</div>
+            <div class="stat-label">Filtered Results</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value" id="todayCount">0</div>
+            <div class="stat-label">Today's Actions</div>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Card -->
+<div class="card notifications-card">
+    <div class="card-header">
+        <div class="header-left">
+            <i class="fas fa-history"></i>
+            Admin Activity Log (Page {{ page }} of {{ total_pages }})
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by admin or action..." 
+                    class="search-input">
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if notifications %}
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-user-shield"></i>
+                    Admin:
+                </label>
+                <select id="adminFilter" class="filter-select">
+                    <option value="">All Admins</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-tasks"></i>
+                    Action:
+                </label>
+                <select id="actionFilter" class="filter-select">
+                    <option value="">All Actions</option>
+                    <option value="ADD">Add Actions</option>
+                    <option value="REMOVE">Remove Actions</option>
+                    <option value="RESET">Reset Actions</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-bullseye"></i>
+                    Target:
+                </label>
+                <select id="targetFilter" class="filter-select">
+                    <option value="">All Targets</option>
+                    <option value="EMPLOYEE">Employee</option>
+                    <option value="USER">User/Admin</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>
+                    <i class="fas fa-calendar"></i>
+                    Date:
+                </label>
+                <input type="date" id="dateFilter" class="filter-select">
+            </div>
+            
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters()">
+                <i class="fas fa-redo"></i>
+                Reset
+            </button>
+        </div>
+
+        <!-- Notifications Timeline -->
+        <div class="timeline" id="notificationsTimeline">
+            {% for notif in notifications %}
+            <div class="timeline-item" 
+                 data-admin="{{ notif[1] }}" 
+                 data-action="{{ notif[2] }}" 
+                 data-target="{{ notif[3] }}"
+                 data-date="{{ notif[6][:10] }}">
+                
+                <div class="timeline-marker 
+                    {% if 'ADD' in notif[2] %}marker-add
+                    {% elif 'REMOVE' in notif[2] %}marker-remove
+                    {% elif 'RESET' in notif[2] %}marker-reset
+                    {% else %}marker-default
+                    {% endif %}">
+                    {% if 'ADD' in notif[2] %}
+                    <i class="fas fa-plus"></i>
+                    {% elif 'REMOVE' in notif[2] %}
+                    <i class="fas fa-trash"></i>
+                    {% elif 'RESET' in notif[2] %}
+                    <i class="fas fa-key"></i>
+                    {% else %}
+                    <i class="fas fa-cog"></i>
+                    {% endif %}
+                </div>
+                
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <div class="timeline-admin">
+                            <i class="fas fa-user-shield"></i>
+                            <strong>{{ notif[1] }}</strong>
+                        </div>
+                        <div class="timeline-time">
+                            <i class="fas fa-clock"></i>
+                            {{ notif[6] }}
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-body">
+                        <div class="action-badge 
+                            {% if 'ADD' in notif[2] %}badge-add
+                            {% elif 'REMOVE' in notif[2] %}badge-remove
+                            {% elif 'RESET' in notif[2] %}badge-reset
+                            {% else %}badge-default
+                            {% endif %}">
+                            {{ notif[2] }}
+                        </div>
+                        
+                        <div class="action-details">
+                            <span class="target-type">
+                                <i class="fas fa-bullseye"></i>
+                                {{ notif[3] }}
+                            </span>
+                            <span class="target-id">{{ notif[4] }}</span>
+                        </div>
+                        
+                        {% if notif[5] %}
+                        <div class="action-description">
+                            <i class="fas fa-info-circle"></i>
+                            {{ notif[5] }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="no-results" style="display: none;">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h4>No Results Found</h4>
+            <p>Try adjusting your search or filter criteria</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper">
+            <div class="pagination-info">
+                Showing <span id="showingStart">{{ ((page - 1) * 50) + 1 }}</span> 
+                to <span id="showingEnd">{{ page * 50 if page * 50 < notifications|length else notifications|length }}</span> 
+                of <span id="totalRecords">{{ notifications|length }}</span> notifications
+            </div>
+            <nav class="pagination-nav">
+                <ul class="pagination">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('notifications', page=page-1) }}">
+                            <i class="fas fa-chevron-left"></i>
+                            Previous
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-chevron-left"></i>
+                            Previous
+                        </span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ p }}</span>
+                        </li>
+                        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 2 and p <= page + 2) %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('notifications', page=p) }}">{{ p }}</a>
+                        </li>
+                        {% elif p == page - 3 or p == page + 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('notifications', page=page+1) }}">
+                            Next
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Next
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <h3>No Activity Logs</h3>
+            <p>There are no administrative actions recorded yet.</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i>
+                Back to Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+        populateAdminFilter();
+        countTodayActivities();
+    });
+
+    // Populate admin filter
+    function populateAdminFilter() {
+        const admins = new Set();
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            admins.add(item.dataset.admin);
+        });
+        
+        const select = document.getElementById('adminFilter');
+        admins.forEach(admin => {
+            const option = document.createElement('option');
+            option.value = admin;
+            option.textContent = admin;
+            select.appendChild(option);
+        });
+    }
+
+    // Count today's activities
+    function countTodayActivities() {
+        const today = new Date().toISOString().split('T')[0];
+        const todayCount = document.querySelectorAll(`.timeline-item[data-date="${today}"]`).length;
+        document.getElementById('todayCount').textContent = todayCount;
+    }
+
+    // Search and filter
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('adminFilter').addEventListener('change', applyFilters);
+    document.getElementById('actionFilter').addEventListener('change', applyFilters);
+    document.getElementById('targetFilter').addEventListener('change', applyFilters);
+    document.getElementById('dateFilter').addEventListener('change', applyFilters);
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const adminFilter = document.getElementById('adminFilter').value;
+        const actionFilter = document.getElementById('actionFilter').value;
+        const targetFilter = document.getElementById('targetFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
+        
+        const items = document.querySelectorAll('.timeline-item');
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            const admin = item.dataset.admin.toLowerCase();
+            const action = item.dataset.action;
+            const target = item.dataset.target;
+            const date = item.dataset.date;
+
+            const matchesSearch = admin.includes(searchTerm) || action.toLowerCase().includes(searchTerm);
+            const matchesAdmin = !adminFilter || item.dataset.admin === adminFilter;
+            const matchesAction = !actionFilter || action.includes(actionFilter);
+            const matchesTarget = !targetFilter || target === targetFilter;
+            const matchesDate = !dateFilter || date === dateFilter;
+
+            if (matchesSearch && matchesAdmin && matchesAction && matchesTarget && matchesDate) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Update counts
+        document.getElementById('filteredCount').textContent = visibleCount;
+
+        // Show/hide no results
+        const noResults = document.getElementById('noResults');
+        const timeline = document.getElementById('notificationsTimeline');
+        
+        if (visibleCount === 0 && (searchTerm || adminFilter || actionFilter || targetFilter || dateFilter)) {
+            timeline.style.display = 'none';
+            noResults.style.display = 'flex';
+            document.querySelector('.pagination-wrapper').style.display = 'none';
+        } else {
+            timeline.style.display = 'block';
+            noResults.style.display = 'none';
+            document.querySelector('.pagination-wrapper').style.display = 'flex';
+        }
+    }
+
+    function clearAllFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('adminFilter').value = '';
+        document.getElementById('actionFilter').value = '';
+        document.getElementById('targetFilter').value = '';
+        document.getElementById('dateFilter').value = '';
+        applyFilters();
+    }
+</script>
+{% endblock %}

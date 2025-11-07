@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Add Employee - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/add_employee.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="header-text">
+            <h1>Add New Employee</h1>
+            <p>Register a new employee in the attendance system</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Add Employee Form -->
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card form-card">
+            <div class="card-header">
+                <i class="fas fa-id-card"></i>
+                Employee Registration Form
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_employee') }}" enctype="multipart/form-data" id="employeeForm">
+                    
+                    <!-- Employee Number -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-hashtag"></i>
+                            <span>Employee Identification</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="emp_num" class="form-label">
+                                <i class="fas fa-id-badge"></i>
+                                Employee Number
+                                <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="emp_num" 
+                                name="emp_num" 
+                                placeholder="e.g., 001, 12345" 
+                                required
+                                min="1">
+                            <small class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                Must be a unique integer number
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-user"></i>
+                            <span>Personal Information</span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="first_name" class="form-label">
+                                        <i class="fas fa-user"></i>
+                                        First Name
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="first_name" 
+                                        name="first_name" 
+                                        placeholder="Enter first name" 
+                                        required
+                                        pattern="[A-Za-z\s]+"
+                                        title="Only letters and spaces allowed">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="last_name" class="form-label">
+                                        <i class="fas fa-user"></i>
+                                        Last Name
+                                        <span class="required">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="last_name" 
+                                        name="last_name" 
+                                        placeholder="Enter last name" 
+                                        required
+                                        pattern="[A-Za-z\s_]+"
+                                        title="Letters, spaces, and underscores allowed">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-building"></i>
+                            <span>Department Information</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="department" class="form-label">
+                                <i class="fas fa-building"></i>
+                                Department
+                                <span class="required">*</span>
+                            </label>
+                            <select class="form-select" id="department" name="department" required>
+                                <option value="">-- Select Department --</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept }}">{{ dept }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text">
+                                <i class="fas fa-folder"></i>
+                                Department folders are located in Employees/ directory
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Photo Upload -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-camera"></i>
+                            <span>Employee Photo</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="photo" class="form-label">
+                                <i class="fas fa-image"></i>
+                                Upload Photo
+                                <span class="required">*</span>
+                            </label>
+                            
+                            <div class="photo-upload-wrapper">
+                                <div class="photo-preview" id="photoPreview">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-user-circle"></i>
+                                        <span>Photo Preview</span>
+                                    </div>
+                                    <img id="previewImage" src="" alt="Preview" style="display: none;">
+                                </div>
+                                
+                                <div class="upload-controls">
+                                    <input 
+                                        type="file" 
+                                        class="form-control" 
+                                        id="photo" 
+                                        name="photo" 
+                                        accept="image/png,image/jpeg,image/jpg,image/webp,image/bmp"
+                                        required>
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photo').click()">
+                                        <i class="fas fa-upload"></i>
+                                        Choose File
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" id="clearPhoto" style="display: none;">
+                                        <i class="fas fa-times"></i>
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <small class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                Accepted formats: JPG, PNG, WEBP, BMP (max 16MB)
+                            </small>
+                        </div>
+
+                        <!-- Photo Guidelines -->
+                        <div class="guidelines-box">
+                            <div class="guidelines-header">
+                                <i class="fas fa-lightbulb"></i>
+                                <strong>Photo Guidelines</strong>
+                            </div>
+                            <ul class="guidelines-list">
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Use a clear, front-facing photo with good lighting
+                                </li>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Face should be visible and not obscured
+                                </li>
+                                <li>
+                                    <i class="fas fa-times"></i>
+                                    Avoid sunglasses, masks, or hats
+                                </li>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Neutral expression recommended
+                                </li>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Plain background preferred
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-save"></i>
+                            <span>Add Employee</span>
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i>
+                            <span>Cancel</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card help-card">
+            <div class="card-body">
+                <div class="help-content">
+                    <div class="help-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="help-text">
+                        <strong>Need Help?</strong>
+                        <p>Ensure all required fields are filled correctly. The employee photo will be used for facial recognition.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Photo preview functionality
+    const photoInput = document.getElementById('photo');
+    const previewImage = document.getElementById('previewImage');
+    const previewPlaceholder = document.querySelector('.preview-placeholder');
+    const clearPhotoBtn = document.getElementById('clearPhoto');
+
+    photoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file size (16MB)
+            if (file.size > 16 * 1024 * 1024) {
+                alert('File size must be less than 16MB');
+                photoInput.value = '';
+                return;
+            }
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/bmp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a valid image file (JPG, PNG, WEBP, BMP)');
+                photoInput.value = '';
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                previewImage.src = event.target.result;
+                previewImage.style.display = 'block';
+                previewPlaceholder.style.display = 'none';
+                clearPhotoBtn.style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Clear photo
+    clearPhotoBtn.addEventListener('click', function() {
+        photoInput.value = '';
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        previewPlaceholder.style.display = 'flex';
+        clearPhotoBtn.style.display = 'none';
+    });
+
+    // Form validation
+    const form = document.getElementById('employeeForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(e) {
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Processing...</span>';
+        
+        // Validate all required fields
+        const empNum = document.getElementById('emp_num').value;
+        const firstName = document.getElementById('first_name').value.trim();
+        const lastName = document.getElementById('last_name').value.trim();
+        const department = document.getElementById('department').value;
+        const photo = document.getElementById('photo').files[0];
+
+        if (!empNum || !firstName || !lastName || !department || !photo) {
+            e.preventDefault();
+            alert('Please fill in all required fields');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Add Employee</span>';
+            return;
+        }
+
+        // Additional validation for employee number
+        if (parseInt(empNum) < 1) {
+            e.preventDefault();
+            alert('Employee number must be a positive integer');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Add Employee</span>';
+            return;
+        }
+    });
+
+    // Auto-format name fields (capitalize first letter)
+    document.getElementById('first_name').addEventListener('blur', function() {
+        this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+    });
+
+    document.getElementById('last_name').addEventListener('blur', function() {
+        this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+    });
+
+    // Prevent form resubmission on page reload
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+{% endblock %}

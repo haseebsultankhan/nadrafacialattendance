@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-title">
+        <i class="fas fa-tachometer-alt"></i>
+        <h1>Dashboard Overview</h1>
+    </div>
+    <div class="page-meta">
+        <span class="current-date">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate"></span>
+        </span>
+        <span class="current-time">
+            <i class="fas fa-clock"></i>
+            <span id="currentTime"></span>
+        </span>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-4 col-md-6">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ total_employees }}</div>
+                <div class="stat-label">Total Employees</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fas fa-database"></i>
+                <span>Registered in System</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6">
+        <div class="stat-card stat-card-success">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ today_detections }}</div>
+                <div class="stat-label">Today's Detections</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fas fa-chart-line"></i>
+                <span>Total Face Recognitions</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6">
+        <div class="stat-card stat-card-info">
+            <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ unique_today }}</div>
+                <div class="stat-label">Unique Employees Today</div>
+            </div>
+            <div class="stat-footer">
+                <i class="fas fa-fingerprint"></i>
+                <span>Distinct Individuals</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="row g-4">
+    <!-- Quick Actions Card -->
+    <div class="col-lg-6">
+        <div class="card action-card">
+            <div class="card-header">
+                <i class="fas fa-bolt"></i>
+                Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="action-grid">
+                    {% if current_user.has_permission('add_employee') %}
+                    <a href="{{ url_for('add_employee') }}" class="action-item action-primary">
+                        <div class="action-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Add Employee</div>
+                            <div class="action-desc">Register new employee</div>
+                        </div>
+                        <i class="fas fa-arrow-right action-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.has_permission('remove_employee') %}
+                    <a href="{{ url_for('remove_employee') }}" class="action-item action-danger">
+                        <div class="action-icon">
+                            <i class="fas fa-user-minus"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Remove Employee</div>
+                            <div class="action-desc">Delete employee record</div>
+                        </div>
+                        <i class="fas fa-arrow-right action-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.has_permission('live_logs') %}
+                    <a href="{{ url_for('live_logs') }}" class="action-item action-success">
+                        <div class="action-icon">
+                            <i class="fas fa-list-alt"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">View Live Logs</div>
+                            <div class="action-desc">Check attendance logs</div>
+                        </div>
+                        <i class="fas fa-arrow-right action-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.has_permission('live_view') %}
+                    <a href="{{ url_for('live_view') }}" class="action-item action-info">
+                        <div class="action-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="action-text">
+                            <div class="action-title">Live Camera View</div>
+                            <div class="action-desc">Monitor cameras</div>
+                        </div>
+                        <i class="fas fa-arrow-right action-arrow"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information Card -->
+    <div class="col-lg-6">
+        <div class="card info-card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                System Information
+            </div>
+            <div class="card-body">
+                <div class="info-list">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-video"></i>
+                            <span>Active Cameras</span>
+                        </div>
+                        <div class="info-value">
+                            <span class="badge badge-primary">4 Cameras</span>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-robot"></i>
+                            <span>Detection Model</span>
+                        </div>
+                        <div class="info-value">
+                            <span class="badge badge-secondary">YOLOv8 + ArcFace</span>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-microchip"></i>
+                            <span>GPU Status</span>
+                        </div>
+                        <div class="info-value">
+                            <span class="badge badge-success">
+                                <i class="fas fa-circle pulse"></i> Active
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-percentage"></i>
+                            <span>Similarity Threshold</span>
+                        </div>
+                        <div class="info-value">
+                            <span class="badge badge-info">0.30</span>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-server"></i>
+                            <span>System Status</span>
+                        </div>
+                        <div class="info-value">
+                            <span class="badge badge-success">
+                                <i class="fas fa-circle pulse"></i> Online
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Your Role</span>
+                        </div>
+                        <div class="info-value">
+                            {% if current_user.is_superadmin() %}
+                            <span class="badge badge-warning">SuperAdmin</span>
+                            {% else %}
+                            <span class="badge badge-primary">Admin</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SuperAdmin Controls (Only visible to SuperAdmins) -->
+{% if current_user.is_superadmin() %}
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card superadmin-card">
+            <div class="card-header">
+                <i class="fas fa-crown"></i>
+                SuperAdmin Controls
+            </div>
+            <div class="card-body">
+                <div class="superadmin-grid">
+                    <a href="{{ url_for('add_admin') }}" class="superadmin-action">
+                        <div class="superadmin-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="superadmin-text">Add Admin</div>
+                    </a>
+
+                    <a href="{{ url_for('remove_admin') }}" class="superadmin-action">
+                        <div class="superadmin-icon">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                        <div class="superadmin-text">Remove Admin</div>
+                    </a>
+
+                    <a href="{{ url_for('live_view') }}" class="superadmin-action">
+                        <div class="superadmin-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="superadmin-text">Live View</div>
+                    </a>
+
+                    <a href="{{ url_for('notifications') }}" class="superadmin-action">
+                        <div class="superadmin-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="superadmin-text">Notifications</div>
+                    </a>
+
+                    <a href="{{ url_for('reset_password') }}" class="superadmin-action">
+                        <div class="superadmin-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="superadmin-text">Reset Password</div>
+                    </a>
+
+                    <a href="{{ url_for('live_logs') }}" class="superadmin-action">
+                        <div class="superadmin-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="superadmin-text">Audit Logs</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update current date and time
+    function updateDateTime() {
+        const now = new Date();
+        
+        // Format date
+        const dateOptions = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        const dateStr = now.toLocaleDateString('en-US', dateOptions);
+        document.getElementById('currentDate').textContent = dateStr;
+        
+        // Format time
+        const timeStr = now.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        document.getElementById('currentTime').textContent = timeStr;
+    }
+
+    // Update immediately and then every second
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // Animate stat cards on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

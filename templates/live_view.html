@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Live View - NADRA AI Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/live_view.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-video"></i>
+        </div>
+        <div class="header-text">
+            <h1>Live Camera View</h1>
+            <p>Real-time face recognition monitoring across all cameras</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <span class="live-badge">
+            <span class="pulse-dot"></span>
+            LIVE
+        </span>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+</div>
+
+<!-- Camera Grid -->
+<div class="camera-grid">
+    {% for cam_ip, cam_name in cameras %}
+    <div class="camera-card">
+        <div class="camera-header">
+            <div class="camera-info">
+                <i class="fas fa-video"></i>
+                <span class="camera-name">{{ cam_name }}</span>
+            </div>
+            <div class="camera-status">
+                <span class="status-indicator status-active"></span>
+                <span class="status-text">Active</span>
+            </div>
+        </div>
+        
+        <div class="camera-feed">
+            <img src="{{ url_for('video_feed', cam_id=loop.index0) }}" 
+                 alt="{{ cam_name }}"
+                 class="feed-image"
+                 onerror="handleImageError(this)">
+            <div class="camera-overlay">
+                <div class="camera-label">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ cam_name }}
+                </div>
+            </div>
+            <div class="loading-overlay" id="loading-{{ loop.index0 }}">
+                <div class="spinner"></div>
+                <span>Connecting...</span>
+            </div>
+        </div>
+        
+        <div class="camera-footer">
+            <div class="camera-meta">
+                <span class="meta-item">
+                    <i class="fas fa-network-wired"></i>
+                    {{ cam_ip }}
+                </span>
+                <span class="meta-item">
+                    <i class="fas fa-eye"></i>
+                    Camera {{ loop.index }}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Legend & Info Card -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card info-card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                Detection Information
+            </div>
+            <div class="card-body">
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-box" style="border-color: #00C8FF;">
+                            <div class="legend-color" style="background: rgba(0, 200, 255, 0.3);"></div>
+                        </div>
+                        <div class="legend-text">
+                            <strong>Cyan Box</strong>
+                            <span>YOLO face detection with confidence score</span>
+                        </div>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-box" style="border-color: #FF8000;">
+                            <div class="legend-color" style="background: rgba(255, 128, 0, 0.3);"></div>
+                        </div>
+                        <div class="legend-text">
+                            <strong>Orange Label</strong>
+                            <span>Employee recognition with similarity score</span>
+                        </div>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="legend-text">
+                            <strong>Detection Threshold</strong>
+                            <span>0.70 (YOLO Confidence)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-icon">
+                            <i class="fas fa-fingerprint"></i>
+                        </div>
+                        <div class="legend-text">
+                            <strong>Recognition Threshold</strong>
+                            <span>0.30 (Similarity Score)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-notes">
+                    <div class="note-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>All detections are automatically logged to the database</span>
+                    </div>
+                    <div class="note-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Duplicate detections are filtered (5-minute cooldown per employee per camera)</span>
+                    </div>
+                    <div class="note-item">
+                        <i class="fas fa-eye"></i>
+                        <span>Refresh the page if camera feeds freeze or disconnect</span>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{{ url_for('live_logs') }}" class="btn btn-primary">
+                        <i class="fas fa-list"></i>
+                        View Detection Logs
+                    </a>
+                    <button onclick="location.reload()" class="btn btn-secondary">
+                        <i class="fas fa-sync"></i>
+                        Refresh Feeds
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Technical Details Card -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card technical-card">
+            <div class="card-header">
+                <i class="fas fa-cogs"></i>
+                System Technical Details
+            </div>
+            <div class="card-body">
+                <div class="technical-grid">
+                    <div class="tech-item">
+                        <div class="tech-label">Detection Model</div>
+                        <div class="tech-value">YOLOv8 Face Detection</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-label">Recognition Model</div>
+                        <div class="tech-value">ArcFace (InsightFace)</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-label">Processing Mode</div>
+                        <div class="tech-value">GPU Batch Processing</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-label">Stream Protocol</div>
+                        <div class="tech-value">RTSP over TCP</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-label">Frame Rate</div>
+                        <div class="tech-value">~30 FPS</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-label">Resolution</div>
+                        <div class="tech-value">480p (Optimized)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Hide loading overlays when images load
+    document.addEventListener('DOMContentLoaded', function() {
+        const feedImages = document.querySelectorAll('.feed-image');
+        
+        feedImages.forEach((img, index) => {
+            img.addEventListener('load', function() {
+                const loading = document.getElementById('loading-' + index);
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            });
+        });
+        
+        // Hide loading after 5 seconds anyway
+        setTimeout(function() {
+            document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                overlay.style.display = 'none';
+            });
+        }, 5000);
+    });
+
+    // Handle image errors
+    function handleImageError(img) {
+        const card = img.closest('.camera-card');
+        const status = card.querySelector('.status-indicator');
+        const statusText = card.querySelector('.status-text');
+        const loading = card.querySelector('.loading-overlay');
+        
+        loading.style.display = 'none';
+        status.classList.remove('status-active');
+        status.classList.add('status-error');
+        statusText.textContent = 'Connection Lost';
+        
+        // Show error message
+        const overlay = img.nextElementSibling;
+        overlay.innerHTML = `
+            <div style="background: rgba(211, 47, 47, 0.9); padding: 2rem; border-radius: 12px; text-align: center;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: white; margin-bottom: 1rem;"></i>
+                <div style="color: white; font-weight: 600; margin-bottom: 0.5rem;">Camera Connection Failed</div>
+                <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Check camera status and network connection</div>
+                <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: white; color: #D32F2F; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+
+    // Auto-refresh warning after 30 minutes
+    setTimeout(function() {
+        if (confirm('Live feeds have been running for 30 minutes. Would you like to refresh for optimal performance?')) {
+            location.reload();
+        }
+    }, 1800000); // 30 minutes
+
+    // Page visibility API - pause when tab is not visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('Page hidden - feeds continue in background');
+        } else {
+            console.log('Page visible - feeds active');
+        }
+    });
+</script>
+{% endblock %}

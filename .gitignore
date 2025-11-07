@@ -1,0 +1,49 @@
+# Ignore model weights and large binaries
+models/**/*.pt
+models/**/*.onnx
+models/**/*.bin
+models/**/*.pth
+models/**/*.h5
+models/**/*.tflite
+models/**/*.engine
+models/**/*.npy
+models/**/*.zip
+
+# Keep model folders themselves
+!models/
+!models/insightface_models/
+!models/yolo/
+
+# Logs (keep folder, exclude contents)
+logs/*
+!logs/
+!logs/detections/
+logs/detections/*
+
+# Employees (keep folder structure, exclude images)
+Employees/**/*.jpg
+Employees/**/*.jpeg
+Employees/**/*.png
+Employees/**/*.bmp
+Employees/**/*.gif
+!Employees/
+!Employees/**/
+
+# Cache / temp / IDE files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+*.swp
+*.DS_Store
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# System files
+Thumbs.db
+.DS_Store
